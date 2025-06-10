@@ -1,0 +1,30 @@
+name: 'telco_project'
+version: '1.0.0'
+
+profile: 'telco_project'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+vars:
+    "dbt_date:time_zone": "America/New_York"
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+
+models:
+  telco_project:
+    staging:
+      +materialized: view
+    
+    intermediate:
+      +materialized: table
+    
+    mart:
+      +materialized: table

@@ -1,0 +1,10 @@
+product_id,product_name,category,monthly_fee
+101,Prepaid Mobile,Mobile,20.0
+102,Control Mobile,Mobile,50.0
+103,Postpaid Mobile,Mobile,100.0
+201,Broadband 300 MB,Broadband,99.9
+202,Broadband 500 MB,Broadband,119.9
+203,Broadband 1 GB,Broadband,199.9
+301,Essential TV,TV,79.9
+302,TV+Streaming,TV,129.9
+303,TV+Streaming+Music,TV,159.9

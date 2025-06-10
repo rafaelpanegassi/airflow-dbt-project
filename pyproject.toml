@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "airflow-dbt-project"
+version = "0.1.0"
+description = ""
+authors = ["Rafael Panegassi <rm.panegassi@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.13.0"
+faker = "^37.3.0"
+pandas = "^2.3.0"
+loguru = "^0.7.3"
+black = "^25.1.0"
+isort = "^6.0.1"
+dbt-core = "^1.9.7"
+dbt-postgres = "^1.9.0"
+python-dotenv = "^1.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
