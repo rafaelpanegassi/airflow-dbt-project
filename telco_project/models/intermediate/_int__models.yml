@@ -1,0 +1,125 @@
+version: 2
+
+models:
+  - name: int_movements_joined_with_dims
+    description: "Intermediate table that joins customer movements with relevant dimension tables for enriched movement analysis."
+    columns:
+      - name: movement_id
+        description: "Unique identifier for the movement event"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+        tests:
+          - not_null
+      - name: customer_name
+        description: "Name of the customer who made the movement"
+      - name: previous_product_id
+        description: "ID of the product before the movement"
+      - name: previous_product_name
+        description: "Name of the product before the movement"
+      - name: new_product_id
+        description: "ID of the product after the movement"
+      - name: new_product_name
+        description: "Name of the product after the movement"
+      - name: movement_type
+        description: "Type of movement (upgrade, downgrade, new customer, cancellation)"
+      - name: movement_date
+        description: "Date when the movement occurred"
+      - name: previous_value
+        description: "Monthly fee of the previous product"
+      - name: new_value
+        description: "Monthly fee of the new product"
+      - name: applied_discount
+        description: "Discount applied during the movement"
+
+  - name: int_usage_joined_with_dims
+    description: "Intermediate table that joins usage data with customer and product dimensions for usage analysis."
+    columns:
+      - name: usage_id
+        description: "Unique identifier for the usage record"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+      - name: customer_name
+        description: "Name of the customer"
+      - name: product_id
+        description: "Foreign key to the product dimension"
+      - name: product_name
+        description: "Name of the product being used"
+      - name: date_ref
+        description: "Reference month for the usage data"
+      - name: data_usage_gb
+        description: "Data consumption in gigabytes"
+      - name: voice_minutes
+        description: "Voice minutes consumed"
+      - name: sms_count
+        description: "Number of SMS messages sent"
+
+  - name: int_support_tickets_joined_with_dims
+    description: "Intermediate table that joins support tickets with customer dimension for support analysis."
+    columns:
+      - name: ticket_id
+        description: "Unique identifier for the support ticket"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+      - name: customer_name
+        description: "Name of the customer who opened the ticket"
+      - name: open_date
+        description: "Date when the ticket was opened"
+      - name: support_channel
+        description: "Channel used to open the ticket"
+      - name: contact_reason
+        description: "Primary reason for the support contact"
+      - name: ticket_status
+        description: "Current status of the ticket"
+
+  - name: int_campaign_dispatches_joined_with_dims
+    description: "Intermediate table that joins campaign dispatches with customer and campaign dimensions for campaign analysis."
+    columns:
+      - name: dispatch_id
+        description: "Unique identifier for the campaign dispatch"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+      - name: customer_name
+        description: "Name of the customer who received the campaign"
+      - name: campaign_id
+        description: "Foreign key to the campaign dimension"
+      - name: campaign_name
+        description: "Name of the campaign"
+      - name: dispatch_date
+        description: "Date when the campaign was sent"
+      - name: clicked_link
+        description: "Boolean indicating if the customer clicked the campaign link"
+
+  - name: int_billing_joined_with_dims
+    description: "Intermediate table that joins billing data with customer dimension for billing analysis."
+    columns:
+      - name: invoice_id
+        description: "Unique identifier for the invoice"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+      - name: customer_name
+        description: "Name of the customer who was billed"
+      - name: due_date
+        description: "Date when the invoice is due"
+      - name: payment_date
+        description: "Date when the invoice was paid"
+      - name: invoice_status
+        description: "Current status of the invoice"
+      - name: total_amount
+        description: "Total amount due on the invoice"
+      - name: paid_amount
+        description: "Amount paid by the customer"
