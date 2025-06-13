@@ -1,0 +1,473 @@
+version: 2
+
+seeds:
+  - name: dim_customer
+    description: "Raw customer data from the seed file."
+    columns:
+      - name: customer_id
+        description: "The unique identifier for a customer."
+        tests:
+          - not_null
+          - unique
+      - name: ssn
+        description: "The customer's unique national identifier (e.g., Social Security Number)."
+      - name: name
+        description: "The full name of the customer."
+      - name: birth_date
+        description: "The customer's date of birth."
+      - name: marital_status
+        description: "The customer's marital status (e.g., Single, Married)."
+      - name: income_bracket
+        description: "The customer's income bracket (e.g., A, B, C, D)."
+      - name: signup_date
+        description: "The date the customer first signed up for a service."
+      - name: city
+        description: "The city where the customer resides."
+      - name: state
+        description: "The state or region where the customer resides."
+      - name: payment_method
+        description: "The customer's preferred payment method (e.g., Credit Card, Direct Debit)."
+      - name: acquisition_channel
+        description: "The channel through which the customer was acquired (e.g., Online, Physical Store)."
+      - name: credit_score
+        description: "The customer's credit score at the time of signup."
+      - name: cancellation_date
+        description: "The date the customer cancelled all services. NULL if active."
+
+  - name: dim_product
+    description: "Raw product data from the seed file."
+    columns:
+      - name: product_id
+        description: "The unique identifier for a product."
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        description: "The commercial name of the product."
+      - name: category
+        description: "The product's category (e.g., Mobile, Broadband, TV)."
+      - name: monthly_fee
+        description: "The monthly recurring fee for the product."
+
+  - name: dim_campaign
+    description: "Raw campaign data from the seed file."
+    columns:
+      - name: campaign_id
+        description: "The unique identifier for a marketing campaign."
+        tests:
+          - not_null
+          - unique
+      - name: campaign_name
+        description: "The name of the marketing campaign."
+      - name: dispatch_channel
+        description: "The channel used to send the campaign (e.g., SMS, Email)."
+      - name: start_date
+        description: "The start date of the campaign's validity."
+      - name: end_date
+        description: "The end date of the campaign's validity."
+
+  - name: fact_movement
+    description: "Raw data for customer movement events (e.g., upgrades, downgrades, cancellations)."
+    columns:
+      - name: movement_id
+        description: "The unique identifier for a movement event."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer who made the movement."
+        tests:
+          - not_null
+      - name: previous_product_id
+        description: "Foreign key to the customer's previous product. NULL for new customers."
+      - name: new_product_id
+        description: "Foreign key to the customer's new product. NULL for cancellations."
+      - name: conversion_campaign_id
+        description: "Foreign key to the campaign that led to this movement, if any."
+      - name: date_id
+        description: "The date of the movement event, in YYYYMMDD format."
+      - name: movement_type
+        description: "The type of movement (e.g., Upgrade, Downgrade, New Customer)."
+      - name: previous_value
+        description: "The monthly fee of the previous product."
+      - name: new_value
+        description: "The monthly fee of the new product."
+      - name: applied_discount
+        description: "Any discount applied as part of the movement."
+
+  - name: fact_campaign_dispatch
+    description: "Raw data for each instance a campaign was sent to a customer."
+    columns:
+      - name: dispatch_id
+        description: "The unique identifier for a single campaign dispatch event."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer who received the campaign."
+      - name: campaign_id
+        description: "Foreign key to the campaign that was sent."
+      - name: date_id
+        description: "The date the campaign was sent, in YYYYMMDD format."
+      - name: clicked_link
+        description: "A boolean flag indicating if the customer clicked the link in the campaign message."
+
+  - name: fact_usage
+    description: "Raw data for monthly service usage by customers."
+    columns:
+      - name: usage_id
+        description: "The unique identifier for a monthly usage record."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer."
+      - name: product_id
+        description: "Foreign key to the product being used."
+      - name: date_ref_id
+        description: "The reference month for the usage record, in YYYYMMDD format (first day of the month)."
+      - name: data_usage_gb
+        description: "Data consumed in Gigabytes."
+      - name: voice_minutes
+        description: "Voice minutes consumed."
+      - name: sms_count
+        description: "Number of SMS messages sent."
+
+  - name: fact_billing
+    description: "Raw data for customer invoices."
+    columns:
+      - name: invoice_id
+        description: "The unique identifier for an invoice."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer who was billed."
+      - name: due_date_id
+        description: "The invoice due date, in YYYYMMDD format."
+      - name: payment_date_id
+        description: "The date the invoice was paid, in YYYYMMDD format. NULL if unpaid."
+      - name: invoice_status
+        description: "The status of the invoice (e.g., Paid, Overdue)."
+      - name: total_amount
+        description: "The total amount due on the invoice."
+      - name: paid_amount
+        description: "The amount paid by the customer."
+
+  - name: fact_support_tickets
+    description: "Raw data for customer support tickets."
+    columns:
+      - name: ticket_id
+        description: "The unique identifier for a support ticket."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer who opened the ticket."
+      - name: open_date_id
+        description: "The date the ticket was opened, in YYYYMMDD format."
+      - name: support_channel
+        description: "The channel used to open the ticket (e.g., Phone, App)."
+      - name: contact_reason
+        description: "The primary reason for the support contact."
+      - name: ticket_status
+        description: "The current status of the ticket (e.g., Resolved, In Progress)."
+
+models:
+  - name: stg_customers
+    description: "Staging table for customers, cleaned and standardized."
+    columns:
+      - name: customer_id
+        description: "The primary key for customers."
+        tests:
+          - not_null
+          - unique
+      - name: customer_ssn
+        description: "The customer's unique national identifier."
+      - name: customer_name
+        description: "The full name of the customer."
+      - name: marital_status
+        description: "The customer's marital status."
+      - name: income_bracket
+        description: "The customer's income bracket."
+      - name: payment_method
+        description: "The customer's preferred payment method."
+      - name: acquisition_channel
+        description: "The channel through which the customer was acquired."
+      - name: credit_score
+        description: "The customer's credit score."
+      - name: city
+        description: "The city where the customer resides."
+      - name: state
+        description: "The state or region where the customer resides."
+      - name: birth_date
+        description: "The customer's date of birth."
+      - name: signup_date
+        description: "The date the customer first signed up."
+      - name: cancellation_date
+        description: "The date the customer cancelled their services. NULL if active."
+  
+  - name: stg_products
+    description: "Staging table for products."
+    columns:
+      - name: product_id
+        description: "The primary key for products."
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        description: "The commercial name of the product."
+      - name: product_category
+        description: "The product's category (e.g., Mobile, Broadband)."
+      - name: monthly_fee
+        description: "The monthly recurring fee for the product."
+
+  - name: stg_campaigns
+    description: "Staging table for campaigns."
+    columns:
+      - name: campaign_id
+        description: "The primary key for campaigns."
+        tests:
+          - not_null
+          - unique
+      - name: campaign_name
+        description: "The name of the marketing campaign."
+      - name: dispatch_channel
+        description: "The channel used to send the campaign."
+      - name: start_date
+        description: "The start date of the campaign."
+      - name: end_date
+        description: "The end date of the campaign."
+
+  - name: stg_movements
+    description: "Staging table for customer movements."
+    columns:
+      - name: movement_id
+        description: "The primary key for movement events."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: new_product_id
+        description: "Foreign key to stg_products for the new product."
+        tests:
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+      - name: previous_product_id
+        description: "Foreign key to stg_products for the previous product."
+        tests:
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+      - name: conversion_campaign_id
+        description: "Foreign key to stg_campaigns."
+        tests:
+          - relationships:
+              to: ref('stg_campaigns')
+              field: campaign_id
+      - name: date_id
+        description: "The string representation of the movement date (YYYYMMDD)."
+      - name: movement_type
+        description: "The type of movement (e.g., Upgrade, Downgrade)."
+      - name: previous_value
+        description: "The monthly fee of the previous product."
+      - name: new_value
+        description: "The monthly fee of the new product."
+      - name: applied_discount
+        description: "Discount amount applied during the movement."
+
+  - name: stg_campaign_dispatches
+    description: "Staging table for campaign dispatches."
+    columns:
+      - name: dispatch_id
+        description: "The primary key for dispatch events."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: campaign_id
+        description: "Foreign key to stg_campaigns."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_campaigns')
+              field: campaign_id
+      - name: date_id
+        description: "The string representation of the dispatch date (YYYYMMDD)."
+      - name: has_clicked_link
+        description: "Boolean flag indicating if the link was clicked."
+  
+  - name: stg_usage
+    description: "Staging table for service usage."
+    columns:
+      - name: usage_id
+        description: "The primary key for usage records."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: product_id
+        description: "Foreign key to stg_products."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+      - name: date_ref_id
+        description: "The string representation of the reference month (YYYYMMDD)."
+      - name: data_usage_gb
+        description: "Data consumed in Gigabytes."
+      - name: voice_minutes
+        description: "Voice minutes consumed."
+      - name: sms_count
+        description: "Number of SMS messages sent."
+
+  - name: stg_billing
+    description: "Staging table for invoices."
+    columns:
+      - name: invoice_id
+        description: "The primary key for invoices."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: due_date_id
+        description: "The string representation of the invoice due date (YYYYMMDD)."
+      - name: payment_date_id
+        description: "The string representation of the invoice payment date (YYYYMMDD)."
+      - name: invoice_status
+        description: "The status of the invoice."
+      - name: total_amount
+        description: "The total amount due on the invoice."
+      - name: paid_amount
+        description: "The amount paid by the customer."
+
+  - name: stg_support_tickets
+    description: "Staging table for support tickets."
+    columns:
+      - name: ticket_id
+        description: "The primary key for support tickets."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: open_date_id
+        description: "The string representation of the ticket open date (YYYYMMDD)."
+      - name: support_channel
+        description: "The channel used to open the ticket."
+      - name: contact_reason
+        description: "The primary reason for the support contact."
+      - name: ticket_status
+        description: "The current status of the ticket."
+
+  - name: stg_date
+    description: "Date dimension with temporal attributes for analysis"
+    columns:
+    - name: date_day
+      description: "Date in YYYY-MM-DD format"
+      tests:
+        - not_null
+        - unique
+    - name: prior_date_day
+      description: "The prior day's date"
+    - name: next_date_day
+      description: "The next day's date"
+    - name: prior_year_date_day
+      description: "The same date in the prior year"
+    - name: prior_year_over_year_date_day
+      description: "The day prior to the same date in the prior year"
+    - name: day_of_week
+      description: "Number of the day of the week (1-7, where 1 is Sunday)"
+    - name: day_of_week_name
+      description: "Full name of the day of the week"
+    - name: day_of_week_name_short
+      description: "Abbreviation of the day of the week name (3 letters)"
+    - name: day_of_month
+      description: "Day of the month (1-31)"
+    - name: day_of_year
+      description: "Day of the year (1-366)"
+    - name: week_start_date
+      description: "First day of the week (Sunday)"
+    - name: week_end_date
+      description: "Last day of the week (Saturday)"
+    - name: prior_year_week_start_date
+      description: "First day of the week in the prior year"
+    - name: prior_year_week_end_date
+      description: "Last day of the week in the prior year"
+    - name: week_of_year
+      description: "Week number of the year (1-53)"
+    - name: iso_week_start_date
+      description: "First day of the ISO week (Monday)"
+    - name: iso_week_end_date
+      description: "Last day of the ISO week (Sunday)"
+    - name: prior_year_iso_week_start_date
+      description: "First day of the ISO week in the prior year"
+    - name: prior_year_iso_week_end_date
+      description: "Last day of the ISO week in the prior year"
+    - name: iso_week_of_year
+      description: "ISO week number of the year (1-53)"
+    - name: prior_year_week_of_year
+      description: "Week number of the prior year"
+    - name: prior_year_iso_week_of_year
+      description: "ISO week number of the prior year"
+    - name: month_of_year
+      description: "Month number of the year (1-12)"
+    - name: month_name
+      description: "Full name of the month"
+    - name: month_name_short
+      description: "Abbreviation of the month name (3 letters)"
+    - name: month_start_date
+      description: "First day of the month"
+    - name: month_end_date
+      description: "Last day of the month"
+    - name: prior_year_month_start_date
+      description: "First day of the month in the prior year"
+    - name: prior_year_month_end_date
+      description: "Last day of the month in the prior year"
+    - name: quarter_of_year
+      description: "Quarter number of the year (1-4)"
+    - name: quarter_start_date
+      description: "First day of the quarter"
+    - name: quarter_end_date
+      description: "Last day of the quarter"
+    - name: year_number
+      description: "Year (e.g., 2023)"
+    - name: year_start_date
+      description: "First day of the year"
+    - name: year_end_date
+      description: "Last day of the year"
+    - name: dbt_updated_at
+      description: "Timestamp of the last update in dbt"
+    - name: dbt_loaded_at
+      description: "Timestamp of when the record was loaded in dbt"
