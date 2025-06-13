@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: mart_customers
+    description: "Final customer dimension table with enriched customer information and metrics."
+    columns:
+      - name: customer_id
+        description: "Unique identifier for the customer"
+        tests:
+          - not_null
+          - unique
+      - name: customer_name
+        description: "Full name of the customer"
+      - name: current_product
+        description: "Current product the customer is subscribed to"
+      - name: monthly_fee
+        description: "Current monthly fee for the customer's product"
+      - name: customer_status
+        description: "Current status of the customer (active, cancelled)"
+      - name: total_revenue
+        description: "Total revenue generated from the customer"
+      - name: avg_monthly_usage_gb
+        description: "Average monthly data usage in gigabytes"
+      - name: support_tickets_count
+        description: "Total number of support tickets opened by the customer"
+      - name: last_movement_date
+        description: "Date of the customer's last product movement"
+      - name: days_as_customer
+        description: "Number of days since the customer first signed up"
+
+  - name: mart_fct_movements
+    description: "Fact table for customer movements with enriched metrics and dimensions."
+    columns:
+      - name: movement_id
+        description: "Unique identifier for the movement event"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+      - name: movement_date
+        description: "Date when the movement occurred"
+      - name: movement_type
+        description: "Type of movement (upgrade, downgrade, new customer, cancellation)"
+      - name: previous_product
+        description: "Product before the movement"
+      - name: new_product
+        description: "Product after the movement"
+      - name: revenue_impact
+        description: "Impact on monthly revenue from the movement"
+      - name: applied_discount
+        description: "Discount applied during the movement"
+
+  - name: mart_fct_billing
+    description: "Fact table for billing information with payment metrics and customer details."
+    columns:
+      - name: invoice_id
+        description: "Unique identifier for the invoice"
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+      - name: invoice_date
+        description: "Date when the invoice was generated"
+      - name: due_date
+        description: "Date when the invoice is due"
+      - name: payment_date
+        description: "Date when the invoice was paid"
+      - name: days_to_pay
+        description: "Number of days between invoice date and payment date"
+      - name: invoice_status
+        description: "Current status of the invoice"
+      - name: total_amount
+        description: "Total amount due on the invoice"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: paid_amount
+        description: "Amount paid by the customer"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: outstanding_amount
+        description: "Amount still outstanding on the invoice"
+
+  - name: mart_billing_status
+    description: "Aggregated view of customer billing status and payment behavior."
+    columns:
+      - name: customer_id
+        description: "Foreign key to the customer dimension"
+        tests:
+          - not_null
+      - name: customer_name
+        description: "Name of the customer"
+      - name: total_invoices
+        description: "Total number of invoices for the customer"
+      - name: paid_invoices
+        description: "Number of paid invoices"
+      - name: overdue_invoices
+        description: "Number of overdue invoices"
+      - name: avg_days_to_pay
+        description: "Average number of days to pay invoices"
+      - name: total_revenue
+        description: "Total revenue from the customer"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: outstanding_balance
+        description: "Current outstanding balance"
+      - name: payment_reliability_score
+        description: "Score indicating customer's payment reliability"
+      - name: last_payment_date
+        description: "Date of the customer's last payment"
+      - name: days_since_last_payment
+        description: "Number of days since the last payment"
