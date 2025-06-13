@@ -352,11 +352,21 @@ def generate_fact_movement(dim_customer, dim_product, dim_campaign, num_movement
 
         if mov_type == "New Customer":
             new_prod_id = dim_product.sample(1).iloc[0]["product_id"]
+            # For new customers, there's a 40% chance they came from a campaign
+            if random.random() < 0.4:
+                campaign = dim_campaign.sample(1).iloc[0]
+                if campaign["start_date"] <= mov_date <= campaign["end_date"]:
+                    conv_camp_id = campaign["campaign_id"]
         elif mov_type == "Cancellation":
             prev_prod_id = dim_product.sample(1).iloc[0]["product_id"]
         else:
             p1, p2 = dim_product.sample(2).iterrows()
             prev_prod_id, new_prod_id = p1[1]["product_id"], p2[1]["product_id"]
+            # For upgrades/downgrades, there's a 30% chance they were influenced by a campaign
+            if random.random() < 0.3:
+                campaign = dim_campaign.sample(1).iloc[0]
+                if campaign["start_date"] <= mov_date <= campaign["end_date"]:
+                    conv_camp_id = campaign["campaign_id"]
 
         if prev_prod_id:
             prev_val = dim_product.loc[
